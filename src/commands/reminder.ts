@@ -27,37 +27,39 @@ export abstract class RemindMessage {
         await db.read();
 
         setInterval(async () => {
-            await db.read();
+            try {
+                await db.read();
 
-            const deployments = await unitafService.deployments();
+                const deployments = await unitafService.deployments();
 
-            deployments.forEach((deployment) => {
-                db.data?.reminders.forEach(async (reminder) => {
-                    if (deployment.release !== null && typeof(reminder.advance) === "number") {
-                        const notifyTime = deployment.release.subtract({
-                            minutes: reminder.advance,
-                        });
+                deployments.forEach((deployment) => {
+                    db.data?.reminders.forEach(async (reminder) => {
+                        if (deployment.release !== null && typeof reminder.advance === "number") {
+                            const notifyTime = deployment.release.subtract({
+                                minutes: reminder.advance,
+                            });
 
-                        if (
-                            reminder.area === deployment.area &&
-                            Temporal.Now.instant().until(notifyTime, {
-                                smallestUnit: "minutes",
-                                roundingMode: "halfExpand",
-                            }).minutes === 0
-                        ) {
-                            const message = new MessageEmbed()
-                                .setTitle(`Reminder for ORBAT release of ${deployment.name}`)
-                                .setDescription(
-                                    `[ORBAT](https://unitedtaskforce.net/operations/auth/${deployment.id}/orbat) releases <t:${deployment.release.epochSeconds}:R>`
-                                );
+                            if (
+                                reminder.area === deployment.area &&
+                                Temporal.Now.instant().until(notifyTime, {
+                                    smallestUnit: "minutes",
+                                    roundingMode: "halfExpand",
+                                }).minutes === 0
+                            ) {
+                                const message = new MessageEmbed()
+                                    .setTitle(`Reminder for ORBAT release of ${deployment.name}`)
+                                    .setDescription(
+                                        `[ORBAT](https://unitedtaskforce.net/operations/auth/${deployment.id}/orbat) releases <t:${deployment.release.epochSeconds}:R>`
+                                    );
 
-                            const user = await client.users.fetch(reminder.user);
+                                const user = await client.users.fetch(reminder.user);
 
-                            user.send({ embeds: [message] });
+                                user.send({ embeds: [message] });
+                            }
                         }
-                    }
+                    });
                 });
-            });
+            } catch (e) {}
         }, 60000);
     }
 }

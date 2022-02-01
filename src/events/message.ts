@@ -3,7 +3,7 @@ import { Discord, On, Client } from "discordx";
 
 @Discord()
 export abstract class MessageEvents {
-    @On("message")
+    @On("messageCreate")
     onMessage([message]: ArgsOf<"message">, client: Client) {
         if (message.mentions.has(process.env["APP_CLIENT_ID"] ?? "-1")) {
             message.reply("How do you do, fellow human? (Use me by using slash `/`)");
