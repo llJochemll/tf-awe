@@ -1,3 +1,4 @@
+import { ChronoUnit } from "@js-joda/core";
 import { ButtonInteraction, MessageActionRow, MessageButton, MessageEmbed, TextChannel } from "discord.js";
 import { ButtonComponent, Client, Discord, Once } from "discordx";
 import { JSONFile, Low } from "lowdb";
@@ -31,9 +32,7 @@ export abstract class RemindMessage {
 
         [deployments[deployments.length - 1]].forEach(async (deployment) => {
             if (deployment.release !== null) {
-                const notifyTime = deployment.release.add({
-                    minutes: 5,
-                });
+                const notifyTime = deployment.release.plus(5, ChronoUnit.MINUTES);
 
                 if (
                     /*Temporal.Now.instant().until(notifyTime, {
