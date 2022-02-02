@@ -85,8 +85,6 @@ export class UnitafService {
             return cached;
         }
 
-        console.log("fetch");
-
         const response = await fetch("https://unitedtaskforce.net/campaigns/deployments", {
             method: "GET",
             headers: {
@@ -109,7 +107,7 @@ export class UnitafService {
 
             const startDateTime =
                 dateTimeVarStartIndex > 0
-                    ? Instant.parse(page.substring(dateTimeStartIndex, dateTimeStartIndex + 19) + "Z")
+                    ? Instant.parse(page.substring(dateTimeStartIndex, dateTimeStartIndex + 19).replace(" ", "T") + "Z")
                     : null;
 
             let release: Instant | null = null;
@@ -121,7 +119,7 @@ export class UnitafService {
 
                 release =
                     releaseDateTimeVarStartIndex > 0
-                        ? Instant.parse(page.substring(releaseDateTimeStartIndex, releaseDateTimeStartIndex + 19) + "Z")
+                        ? Instant.parse(page.substring(releaseDateTimeStartIndex, releaseDateTimeStartIndex + 19).replace(" ", "T") + "Z")
                         : null;
             }
 

@@ -35,7 +35,7 @@ export abstract class RemindMessage {
                 deployments.forEach((deployment) => {
                     db.data?.reminders.forEach(async (reminder) => {
                         if (deployment.release !== null && typeof reminder.advance === "number") {
-                            const notifyTime = deployment.release.minus(5, ChronoUnit.MINUTES);
+                            const notifyTime = deployment.release.minus(reminder.advance, ChronoUnit.MINUTES);
 
                             if (
                                 reminder.area === deployment.area &&
@@ -54,7 +54,9 @@ export abstract class RemindMessage {
                         }
                     });
                 });
-            } catch (e) {}
+            } catch (e) {
+                console.log(e);
+            }
         }, 60000);
     }
 }
