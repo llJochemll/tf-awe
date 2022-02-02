@@ -1,9 +1,9 @@
-import { Temporal } from "@js-temporal/polyfill";
 import { CommandInteraction, MessageEmbed, MessagePayload } from "discord.js";
 import { Client, Discord, Once, Slash, SlashGroup, SlashOption } from "discordx";
 import { JSONFile, Low } from "lowdb";
 import { areas, UnitafService } from "../unitaf/service.js";
 import type { Area } from "../unitaf/service.js";
+import { ChronoUnit, Instant, TemporalUnit } from "@js-joda/core";
 
 interface Reminder {
     type: "release" | "start";
@@ -35,21 +35,16 @@ export abstract class RemindMessage {
                 deployments.forEach((deployment) => {
                     db.data?.reminders.forEach(async (reminder) => {
                         if (deployment.release !== null && typeof reminder.advance === "number") {
-                            const notifyTime = deployment.release.subtract({
-                                minutes: reminder.advance,
-                            });
+                            const notifyTime = deployment.release.minus(5, ChronoUnit.MINUTES);
 
                             if (
                                 reminder.area === deployment.area &&
-                                Temporal.Now.instant().until(notifyTime, {
-                                    smallestUnit: "minutes",
-                                    roundingMode: "halfExpand",
-                                }).minutes === 0
+                                Instant.now().until(notifyTime, ChronoUnit.MINUTES) === 0
                             ) {
                                 const message = new MessageEmbed()
                                     .setTitle(`Reminder for ORBAT release of ${deployment.name}`)
                                     .setDescription(
-                                        `[ORBAT](https://unitedtaskforce.net/operations/auth/${deployment.id}/orbat) releases <t:${deployment.release.epochSeconds}:R>`
+                                        `[ORBAT](https://unitedtaskforce.net/operations/auth/${deployment.id}/orbat) releases <t:${deployment.release.epochSecond}:R>`
                                     );
 
                                 const user = await client.users.fetch(reminder.user);

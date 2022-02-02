@@ -1,7 +1,7 @@
 import { JSDOM } from "jsdom";
-import { Temporal } from "@js-temporal/polyfill";
 import fetch from "node-fetch";
 import NodeCache from "node-cache";
+import { Instant } from "@js-joda/core";
 
 export const areas = [
     "operation",
@@ -41,8 +41,8 @@ interface Deployment {
     name: string;
     area: Area;
     id: string;
-    release: Temporal.Instant;
-    start: Temporal.Instant;
+    release: Instant;
+    start: Instant;
 }
 
 export class UnitafService {
@@ -109,10 +109,10 @@ export class UnitafService {
 
             const startDateTime =
                 dateTimeVarStartIndex > 0
-                    ? Temporal.Instant.from(page.substring(dateTimeStartIndex, dateTimeStartIndex + 19) + "Z")
+                    ? Instant.parse(page.substring(dateTimeStartIndex, dateTimeStartIndex + 19) + "Z")
                     : null;
 
-            let release: Temporal.Instant | null = null;
+            let release: Instant | null = null;
 
             if (page.includes(`${id}_orbat_count`)) {
                 const releaseDateTimeVarName = `date_${id}=new Date(Date.parse(`;
@@ -121,9 +121,7 @@ export class UnitafService {
 
                 release =
                     releaseDateTimeVarStartIndex > 0
-                        ? Temporal.Instant.from(
-                              page.substring(releaseDateTimeStartIndex, releaseDateTimeStartIndex + 19) + "Z"
-                          )
+                        ? Instant.parse(page.substring(releaseDateTimeStartIndex, releaseDateTimeStartIndex + 19) + "Z")
                         : null;
             }
 
