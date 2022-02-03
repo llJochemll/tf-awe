@@ -37,14 +37,16 @@ export abstract class RemindMessage {
                         if (deployment.release !== null && typeof reminder.advance === "number") {
                             const notifyTime = deployment.release.minus(reminder.advance, ChronoUnit.MINUTES);
 
+                            const difference = Instant.now().until(notifyTime, ChronoUnit.SECONDS);
+
                             if (
                                 reminder.area === deployment.area &&
-                                Instant.now().until(notifyTime, ChronoUnit.MINUTES) === 0
+                                difference <= 60 && difference > 0
                             ) {
                                 const message = new MessageEmbed()
                                     .setTitle(`Reminder for ORBAT release of ${deployment.name}`)
                                     .setDescription(
-                                        `[ORBAT](https://unitedtaskforce.net/operations/auth/${deployment.id}/orbat) releases <t:${deployment.release.epochSecond}:R>`
+                                        `[ORBAT](https://unitedtaskforce.net/operations/auth/${deployment.id}/orbat) releases <t:${deployment.release.epochSecond()}:R>`
                                     );
 
                                 const user = await client.users.fetch(reminder.user);
