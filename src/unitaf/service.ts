@@ -37,12 +37,22 @@ const areaMap: Map<string, Area> = new Map([
     ["intake", "special"],
 ]);
 
-interface Deployment {
+export interface Slot {
+    localId: number;
+    name: string;
+    player: string | null;
+}
+
+export interface Deployment {
     name: string;
     area: Area;
     id: string;
-    release: Instant;
-    start: Instant;
+    release: Instant | null;
+    start: Instant | null;
+}
+
+export interface ExtendedDeployment /*extends Deployment*/ {
+    slots: Slot[];
 }
 
 export class UnitafService {
@@ -65,7 +75,9 @@ export class UnitafService {
         });
     };
 
-    deployment = async (id: string) => {
+    deployment = async (id: string): Promise<ExtendedDeployment> => {
+        console.log("FETCH: get deployment: " + id);
+
         const response = await fetch(`https://unitedtaskforce.net/operations/auth/${id}/orbat`, {
             method: "GET",
             headers: {
@@ -75,10 +87,42 @@ export class UnitafService {
 
         const document = this.parseHtml(await response.text());
 
-        const table = document.querySelector("#content > div.col-lg-8 > div.table-responsive") as HTMLDivElement;
+        const rows = [...document.querySelectorAll("tr").values()];
+
+        const slots: Slot[] = rows
+            .map((row, i) => {
+                if (!row.children[0].hasAttribute("data-toggle")) {
+                    return null;
+                }
+
+                const name = (row.children[1]?.textContent ?? row.children[1]?.children[0]?.textContent)?.trim();
+
+                if (name === undefined || name === "Reservist") {
+                    return null;
+                }
+
+                const player = row.children[3]?.children[0]?.textContent?.trim() ?? null;
+
+                return {
+                    localId: -1,
+                    name,
+                    player,
+                };
+            })
+            .filter((s) => s !== null)
+            .map((s, i) => ({
+                localId: i,
+                name: s!.name,
+                player: s!.player,
+            }));
+
+        return {
+            slots,
+        };
     };
 
-    deployments = async () => {
+    deployments = async (): Promise<Deployment[]> => {
+        console.log("FETCH: getting deployments");
         const cached = this._deploymentsCache.get<Deployment[]>("deployments");
 
         if (cached !== undefined) {
@@ -96,55 +140,63 @@ export class UnitafService {
 
         const document = this.parseHtml(page);
 
-        const deployments = Array.from(document.getElementsByClassName("campaign-row")).map((rowElement) => {
-            const id = (rowElement.childNodes[0] as HTMLAnchorElement | undefined)?.href
-                ?.replace("/operations/auth/", "")
-                ?.replace("/orbat", "");
+        const deployments = Array.from(document.getElementsByClassName("campaign-row"))
+            .map((rowElement) => {
+                const id = (rowElement.childNodes[0] as HTMLAnchorElement | undefined)?.href
+                    ?.replace("/operations/auth/", "")
+                    ?.replace("/orbat", "");
 
-            const dateTimeVarName = `utcTime${id}`;
-            const dateTimeVarStartIndex = page.indexOf(dateTimeVarName);
-            const dateTimeStartIndex = dateTimeVarStartIndex + dateTimeVarName.length + 2;
+                const dateTimeVarName = `utcTime${id}`;
+                const dateTimeVarStartIndex = page.indexOf(dateTimeVarName);
+                const dateTimeStartIndex = dateTimeVarStartIndex + dateTimeVarName.length + 2;
 
-            const startDateTime =
-                dateTimeVarStartIndex > 0
-                    ? Instant.parse(page.substring(dateTimeStartIndex, dateTimeStartIndex + 19).replace(" ", "T") + "Z")
-                    : null;
-
-            let release: Instant | null = null;
-
-            if (page.includes(`${id}_orbat_count`)) {
-                const releaseDateTimeVarName = `date_${id}=new Date(Date.parse(`;
-                const releaseDateTimeVarStartIndex = page.indexOf(releaseDateTimeVarName);
-                const releaseDateTimeStartIndex = releaseDateTimeVarStartIndex + releaseDateTimeVarName.length + 1;
-
-                release =
-                    releaseDateTimeVarStartIndex > 0
-                        ? Instant.parse(page.substring(releaseDateTimeStartIndex, releaseDateTimeStartIndex + 19).replace(" ", "T") + "Z")
+                const startDateTime =
+                    dateTimeVarStartIndex > 0
+                        ? Instant.parse(
+                              page.substring(dateTimeStartIndex, dateTimeStartIndex + 19).replace(" ", "T") + "Z"
+                          )
                         : null;
-            }
 
-            const titleElement = rowElement.children[1]?.children[0]?.children[0]?.children[0] as
-                | HTMLHeadingElement
-                | undefined;
+                let release: Instant | null = null;
 
-            const description = titleElement?.children[0]?.innerHTML;
+                if (page.includes(`${id}_orbat_count`)) {
+                    const releaseDateTimeVarName = `date_${id}=new Date(Date.parse(`;
+                    const releaseDateTimeVarStartIndex = page.indexOf(releaseDateTimeVarName);
+                    const releaseDateTimeStartIndex = releaseDateTimeVarStartIndex + releaseDateTimeVarName.length + 1;
 
-            let area: Area = "operation";
-
-            [...areaMap.keys()].forEach((key) => {
-                if (description?.toLowerCase().includes(key)) {
-                    area = areaMap.get(key) ?? "operation";
+                    release =
+                        releaseDateTimeVarStartIndex > 0
+                            ? Instant.parse(
+                                  page
+                                      .substring(releaseDateTimeStartIndex, releaseDateTimeStartIndex + 19)
+                                      .replace(" ", "T") + "Z"
+                              )
+                            : null;
                 }
-            });
 
-            return {
-                name: titleElement?.innerHTML.slice(0, titleElement?.innerHTML.indexOf("<")),
-                area: area,
-                id: id ?? "-1",
-                release,
-                start: startDateTime,
-            };
-        });
+                const titleElement = rowElement.children[1]?.children[0]?.children[0]?.children[0] as
+                    | HTMLHeadingElement
+                    | undefined;
+
+                const description = titleElement?.children[0]?.innerHTML;
+
+                let area: Area = "operation";
+
+                [...areaMap.keys()].forEach((key) => {
+                    if (description?.toLowerCase().includes(key)) {
+                        area = areaMap.get(key) ?? "operation";
+                    }
+                });
+
+                return {
+                    name: titleElement?.innerHTML.slice(0, titleElement?.innerHTML.indexOf("<")) ?? "",
+                    area: area,
+                    id: id ?? "-1",
+                    release,
+                    start: startDateTime,
+                };
+            })
+            .filter((d) => d.id !== "-1");
 
         this._deploymentsCache.set("deployments", deployments, 59);
 

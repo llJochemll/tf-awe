@@ -32,7 +32,7 @@ export abstract class RemindMessage {
 
                 const deployments = await unitafService.deployments();
 
-                deployments.forEach((deployment) => {
+                for (const deployment of deployments) {
                     db.data?.reminders.forEach(async (reminder) => {
                         if (deployment.release !== null && typeof reminder.advance === "number") {
                             const notifyTime = deployment.release.minus(reminder.advance, ChronoUnit.MINUTES);
@@ -53,7 +53,7 @@ export abstract class RemindMessage {
                             }
                         }
                     });
-                });
+                };
             } catch (e) {
                 console.log(e);
             }
