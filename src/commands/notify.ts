@@ -48,7 +48,8 @@ export abstract class RemindMessage {
                         )
                         .setDescription(
                             `You will be notified of any slot that opens up, so be prepared to be pinged a lot`
-                        );
+                        )
+                        .setURL(`https://unitedtaskforce.net/operations/auth/${deployment.id}/orbat`);
 
                     const row = new MessageActionRow().addComponents(
                         new MessageButton()
