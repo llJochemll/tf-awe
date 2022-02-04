@@ -27,6 +27,11 @@ export abstract class RemindMessage {
         setInterval(async () => {
             const deployments = await unitafService.deployments();
 
+            if (deployments.length === 0) {
+                console.log("Found no deployments");
+                return;
+            }
+
             await db.read();
 
             if (db.data === null) {
@@ -95,24 +100,25 @@ export abstract class RemindMessage {
                     }
 
                     for (const [slotName, open] of currentSlots.entries()) {
-                        if ((snapshotSlots.get(slotName) ?? 0) < open) {
-                            console.log(
-                                slotName,
-                                snapshotSlots.get(slotName) ?? 0,
-                                open,
-                                (snapshotSlots.get(slotName) ?? 0) < open
-                            );
+                        if ((snapshotSlots.get(slotName) ?? 999) < open) {
                             const channel = await client.channels.fetch(process.env["BOT_CHANNEL_ID"] ?? "-1");
 
                             let mentions = "";
 
                             if (db.data.slotNotifications[deployment.id]!.mentionUsers.length > 0) {
-                                mentions = `\n<@${db.data.slotNotifications[deployment.id]!.mentionUsers.join("> <@")}>`;
+                                mentions = `\n<@${db.data.slotNotifications[deployment.id]!.mentionUsers.join(
+                                    "> <@"
+                                )}>`;
                             }
 
-                            (channel as TextChannel).send(
+                            const message = await (channel as TextChannel).send(
                                 `${slotName} slot just opened on ${deployment.name}. (https://unitedtaskforce.net/operations/auth/${deployment.id}/orbat)${mentions}`
                             );
+
+                            db.data.slotNotifications[deployment.id]!.messages = [
+                                ...db.data.slotNotifications[deployment.id]!.messages,
+                                message.id,
+                            ];
                         }
                     }
 
@@ -328,7 +334,7 @@ export abstract class RemindMessage {
             try {
                 await channel?.messages.delete(message);
             } catch (e) {
-                console.error(e);
+                console.log(e);
             }
         });
 
