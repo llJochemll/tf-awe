@@ -119,6 +119,8 @@ export abstract class RemindMessage {
                                 ...db.data.slotNotifications[deployment.id]!.messages,
                                 message.id,
                             ];
+
+                            await db.write();
                         }
                     }
 
