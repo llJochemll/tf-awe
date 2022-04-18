@@ -64,10 +64,7 @@ export abstract class RemindMessage {
 }
 
 @Discord()
-@SlashGroup("remind", "Add a reminder", {
-    add: "Add a reminder",
-    remove: "Remove a reminder",
-})
+@SlashGroup("remind", "Add a reminder")
 export abstract class RemindCommand {
     @Slash("release")
     @SlashGroup("add")

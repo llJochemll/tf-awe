@@ -59,9 +59,7 @@ export abstract class GameInit {
 }
 
 @Discord()
-@SlashGroup("game", "Game commands", {
-    subscribe: "Subscribe to game pings",
-})
+@SlashGroup("game", "Game commands")
 export abstract class RemindCommand {
     @Slash("subscribe")
     private async subscribe(
