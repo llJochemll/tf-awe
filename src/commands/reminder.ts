@@ -39,14 +39,13 @@ export abstract class RemindMessage {
 
                             const difference = Instant.now().until(notifyTime, ChronoUnit.SECONDS);
 
-                            if (
-                                reminder.area === deployment.area &&
-                                difference <= 60 && difference > 0
-                            ) {
+                            if (reminder.area === deployment.area && difference <= 60 && difference > 0) {
                                 const message = new MessageEmbed()
                                     .setTitle(`Reminder for ORBAT release of ${deployment.name}`)
                                     .setDescription(
-                                        `[ORBAT](https://unitedtaskforce.net/operations/auth/${deployment.id}/orbat) releases <t:${deployment.release.epochSecond()}:R>`
+                                        `[ORBAT](https://unitedtaskforce.net/operations/auth/${
+                                            deployment.id
+                                        }/orbat) releases <t:${deployment.release.epochSecond()}:R>`
                                     );
 
                                 const user = await client.users.fetch(reminder.user);
@@ -55,7 +54,7 @@ export abstract class RemindMessage {
                             }
                         }
                     });
-                };
+                }
             } catch (e) {
                 console.log(e);
             }
@@ -64,10 +63,12 @@ export abstract class RemindMessage {
 }
 
 @Discord()
-@SlashGroup("remind", "Add a reminder")
+@SlashGroup({ name: "remind", description: "Add a reminder" })
+@SlashGroup({ name: "add", root: "remind" })
+@SlashGroup({ name: "remove", root: "remind" })
 export abstract class RemindCommand {
     @Slash("release")
-    @SlashGroup("add")
+    @SlashGroup("add", "remind")
     private async addRelease(
         @SlashOption("area", {
             type: "STRING",
@@ -113,7 +114,7 @@ export abstract class RemindCommand {
     }
 
     @Slash("release")
-    @SlashGroup("remove")
+    @SlashGroup("remove", "remind")
     private async removeRelease(
         @SlashOption("area", {
             type: "STRING",
