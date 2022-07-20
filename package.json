@@ -38,7 +38,7 @@
     "@js-joda/core": "^5.2.0",
     "@koa/router": "^10.1.1",
     "discord.js": "^13.6.0",
-    "discordx": "^9.5.2",
+    "discordx": "^10.0.0",
     "jsdom": "^19.0.0",
     "koa": "^2.13.4",
     "lowdb": "^3.0.0",
