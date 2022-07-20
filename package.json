@@ -33,7 +33,7 @@
   "dependencies": {
     "@discordx/importer": "^1.1.2",
     "@discordx/koa": "^1.0.9",
-    "@discordx/pagination": "^2.0.1",
+    "@discordx/pagination": "^3.0.0",
     "@discordx/utilities": "^4.1.0",
     "@js-joda/core": "^5.2.0",
     "@koa/router": "^10.1.1",
