@@ -4,7 +4,7 @@ import { Discord, On, Client } from "discordx";
 @Discord()
 export abstract class MessageEvents {
     @On("messageCreate")
-    onMessage([message]: ArgsOf<"message">, client: Client) {
+    onMessage([message]: ArgsOf<"messageCreate">, client: Client) {
         if (process.env["MODE"] !== "production" && message.guildId !== process.env["GUILD_DEV_ID"]) {
             return;
         }

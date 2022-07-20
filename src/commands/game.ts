@@ -1,4 +1,4 @@
-import { Client, CommandInteraction, GuildMember } from "discord.js";
+import { ApplicationCommandOptionType, Client, CommandInteraction, GuildMember } from "discord.js";
 import { Discord, Once, Slash, SlashGroup, SlashOption } from "discordx";
 import { JSONFile, Low } from "lowdb";
 
@@ -68,7 +68,7 @@ export abstract class RemindCommand {
     @Slash("subscribe")
     private async subscribe(
         @SlashOption("game", {
-            type: "STRING",
+            type: ApplicationCommandOptionType.String,
             autocomplete: (interaction) => {
                 interaction.respond(gameNames.map((n) => ({ name: n, value: n })));
             },
@@ -94,7 +94,7 @@ export abstract class RemindCommand {
     @Slash("unsubscribe")
     private async unsubscribe(
         @SlashOption("game", {
-            type: "STRING",
+            type: ApplicationCommandOptionType.String,
             autocomplete: (interaction) => {
                 interaction.respond(gameNames.map((n) => ({ name: n, value: n })));
             },

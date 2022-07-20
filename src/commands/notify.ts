@@ -1,5 +1,5 @@
 import { ChronoUnit } from "@js-joda/core";
-import { ButtonInteraction, Client, MessageActionRow, MessageButton, MessageEmbed, TextChannel } from "discord.js";
+import { ButtonInteraction, Client, TextChannel, EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, MessageActionRowComponentBuilder } from "discord.js";
 import { ButtonComponent, Discord, Once } from "discordx";
 import { JSONFile, Low } from "lowdb";
 import { UnitafService } from "../unitaf/service.js";
@@ -47,7 +47,7 @@ export abstract class RemindMessage {
 
             for (const deployment of deployments) {
                 if (deployment.release === null && db.data.slotNotifications[deployment.id] === undefined) {
-                    const messageEmbed = new MessageEmbed()
+                    const messageEmbed = new EmbedBuilder()
                         .setTitle(
                             `ORBAT for ${deployment.name} has been released, click the button below for slot notifications`
                         )
@@ -56,16 +56,18 @@ export abstract class RemindMessage {
                         )
                         .setURL(`https://unitedtaskforce.net/operations/auth/${deployment.id}/orbat`);
 
-                    const row = new MessageActionRow().addComponents(
-                        new MessageButton()
+                    const row = new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
+                        new ButtonBuilder()
                             .setCustomId(`notify-slot-enable-${deployment.id}`)
                             .setLabel("Enable notifications")
-                            .setStyle("PRIMARY"),
-                        new MessageButton()
+                            .setStyle(ButtonStyle.Primary),
+                        new ButtonBuilder()
                             .setCustomId(`notify-slot-disable-${deployment.id}`)
                             .setLabel("Disable notifications")
-                            .setStyle("DANGER")
+                            .setStyle(ButtonStyle.Danger)
                     );
+
+                    
 
                     const channel = await client.channels.fetch(process.env["BOT_CHANNEL_ID"] ?? "-1");
 
@@ -287,28 +289,28 @@ export abstract class RemindMessage {
             const slotEntries =
                 slots !== undefined ? [...slots.entries()].filter(([name, open]) => open > 0) : undefined;
 
-            embed.fields = [
-                {
-                    name: "Open slots:",
-                    value:
-                        slotEntries !== undefined
-                            ? slotEntries.length > 0
-                                ? slotEntries.map(([name, open]) => `- ${name}: ${open} open`).join("\n")
-                                : "No open slots"
-                            : embed.fields[0].value,
-                    inline: false,
-                },
-                {
-                    name: "Notifications enabled for:",
-                    value:
-                        slotNotification.mentionUsers.length ?? 0 > 0
-                            ? `<@${slotNotification.mentionUsers.join("> <@")}>`
-                            : "Nobody",
-                    inline: false,
-                },
-            ];
+                let newEmbed = EmbedBuilder.from(embed).setFields([
+                    {
+                        name: "Open slots:",
+                        value:
+                            slotEntries !== undefined
+                                ? slotEntries.length > 0
+                                    ? slotEntries.map(([name, open]) => `- ${name}: ${open} open`).join("\n")
+                                    : "No open slots"
+                                : embed.fields[0].value,
+                        inline: false,
+                    },
+                    {
+                        name: "Notifications enabled for:",
+                        value:
+                            slotNotification.mentionUsers.length ?? 0 > 0
+                                ? `<@${slotNotification.mentionUsers.join("> <@")}>`
+                                : "Nobody",
+                        inline: false,
+                    },
+                ])
 
-            await message.edit({ embeds: [embed] });
+            await message.edit({embeds: [newEmbed]});
         } catch (e) {
             console.error(e);
         }

@@ -58,7 +58,7 @@ export interface ExtendedDeployment /*extends Deployment*/ {
 export class UnitafService {
     private _deploymentsCache = new NodeCache({ stdTTL: 59 });
 
-    constructor(private _sessionId = "cjmfarobnc678h006r9mpu9eh2ieu0hq") {}
+    constructor(private _sessionId = "qc6c628jvv6rf5gttkajsse084tl1cun") {}
 
     login = async (username: string, password: string) => {
         /*const data = new FormData();

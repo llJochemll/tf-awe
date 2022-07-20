@@ -1,14 +1,15 @@
 import "reflect-metadata";
-import { Intents, Interaction, Message } from "discord.js";
+import { Interaction, Message, GatewayIntentBits } from "discord.js";
 import { Client } from "discordx";
 import { dirname, importx } from "@discordx/importer";
 import { Koa } from "@discordx/koa";
 import { config } from "dotenv";
+import { UnitafService } from "./unitaf/service.js";
 
 config();
 
 export const client = new Client({
-    intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES],
+    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
     // If you only want to use global commands only, comment this line
     botGuilds: [
         (client) =>
@@ -29,7 +30,7 @@ client.once("ready", async () => {
     });
 
     // init permissions; enabled log to see changes
-    await client.initApplicationPermissions(true);
+    //await client. initApplicationPermissions(true);
 
     // uncomment this line to clear all guild commands,
     // useful when moving to global commands from guild commands

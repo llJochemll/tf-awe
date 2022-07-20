@@ -1,4 +1,4 @@
-import { CommandInteraction, MessageEmbed, MessagePayload } from "discord.js";
+import { ApplicationCommandOptionType, CommandInteraction, EmbedBuilder } from "discord.js";
 import { Client, Discord, Once, Slash, SlashGroup, SlashOption } from "discordx";
 import { JSONFile, Low } from "lowdb";
 import { areas, UnitafService } from "../unitaf/service.js";
@@ -40,7 +40,7 @@ export abstract class RemindMessage {
                             const difference = Instant.now().until(notifyTime, ChronoUnit.SECONDS);
 
                             if (reminder.area === deployment.area && difference <= 60 && difference > 0) {
-                                const message = new MessageEmbed()
+                                const message = new EmbedBuilder()
                                     .setTitle(`Reminder for ORBAT release of ${deployment.name}`)
                                     .setDescription(
                                         `[ORBAT](https://unitedtaskforce.net/operations/auth/${
@@ -71,7 +71,7 @@ export abstract class RemindCommand {
     @SlashGroup("add", "remind")
     private async addRelease(
         @SlashOption("area", {
-            type: "STRING",
+            type: ApplicationCommandOptionType.String,
             autocomplete: (interaction) => {
                 interaction.respond(areas.filter((a) => a !== "special").map((s) => ({ name: s, value: s })));
             },
@@ -79,7 +79,7 @@ export abstract class RemindCommand {
         })
         area: Area,
         @SlashOption("advance", {
-            type: "NUMBER",
+            type: ApplicationCommandOptionType.Number,
             required: false,
             description: "Time in minutes before the release that you want to be notified",
         })
@@ -117,7 +117,7 @@ export abstract class RemindCommand {
     @SlashGroup("remove", "remind")
     private async removeRelease(
         @SlashOption("area", {
-            type: "STRING",
+            type: ApplicationCommandOptionType.String,
             autocomplete: (interaction) => {
                 interaction.respond(areas.map((s) => ({ name: s, value: s })));
             },
