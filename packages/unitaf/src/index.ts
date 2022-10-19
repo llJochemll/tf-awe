@@ -37,28 +37,37 @@ const areaMap: Map<string, Area> = new Map([
     ["intake", "special"],
 ]);
 
+export interface Group {
+    name: string;
+    slots: Slot[];
+}
+
 export interface Slot {
-    localId: number;
+    group: Group;
     name: string;
     player: string | null;
+    id: string;
 }
 
 export interface Deployment {
     name: string;
+    description: string;
     area: Area;
     id: string;
     release: Instant | null;
     start: Instant | null;
 }
 
-export interface ExtendedDeployment /*extends Deployment*/ {
+export interface ExtendedDeployment extends Deployment {
+    groups: Group[];
     slots: Slot[];
 }
 
 export class UnitafService {
     private _deploymentsCache = new NodeCache({ stdTTL: 59 });
+    private _deploymentsListCache = new NodeCache({ stdTTL: 59 });
 
-    constructor(private _sessionId = "qc6c628jvv6rf5gttkajsse084tl1cun") {}
+    constructor(private _sessionId = "07ehnlbcme09rseh64jh170ifhim12bu") {}
 
     login = async (username: string, password: string) => {
         /*const data = new FormData();
@@ -76,7 +85,15 @@ export class UnitafService {
     };
 
     deployment = async (id: string): Promise<ExtendedDeployment> => {
+        const cached = this._deploymentsCache.get<ExtendedDeployment>(id);
+
+        if (cached !== undefined) {
+            return cached;
+        }
+
         console.log("FETCH: get deployment: " + id);
+
+        const deployment = (await this.deployments()).find((x) => x.id === id)!;
 
         const response = await fetch(`https://unitedtaskforce.net/operations/auth/${id}/orbat`, {
             method: "GET",
@@ -89,45 +106,73 @@ export class UnitafService {
 
         const rows = [...document.querySelectorAll("tr").values()];
 
+        //const groups: Group[] = [];
+        const groups = new Map<string, Group>();
+
+        let groupName = "";
+
         const slots: Slot[] = rows
             .map((row, i) => {
+                if (row.children[0].tagName === "TH") {
+                    groupName = row.children[0]?.children[0]?.children[0].textContent?.replaceAll(`"`, "")?.trim() ?? "";
+                    if (!groups.has(groupName)) {
+                        groups.set(groupName, { name: groupName, slots: [] });
+                    }
+                }
+
                 if (!row.children[0].hasAttribute("data-toggle")) {
                     return null;
                 }
 
-                const name = (row.children[1]?.textContent ?? row.children[1]?.children[0]?.textContent)?.trim();
+                let name: string | undefined = row.children[1]?.children[0]?.textContent?.trim();
+
+                if (name === "") {
+                    name = row.children[1]?.textContent?.trim();
+                }
 
                 if (name === undefined || name === "Reservist") {
                     return null;
                 }
 
+                name = name.split("   ")[0];
+
                 const player = row.children[3]?.children[0]?.textContent?.trim() ?? null;
 
-                return {
-                    localId: -1,
+                const group = groups.get(groupName)!;
+                const slot = {
+                    group,
                     name,
                     player,
+                    id: `${group.name}-${name}`
                 };
+
+                group.slots.push(slot);
+
+                return slot;
             })
             .filter((s) => s !== null)
             .map((s, i) => ({
-                localId: i,
+                id: s!.id,
+                group: s!.group,
                 name: s!.name,
                 player: s!.player,
             }));
 
         return {
+            ...deployment,
+            groups: [...groups.values()].filter((x) => x.slots.length > 0),
             slots,
         };
     };
 
     deployments = async (): Promise<Deployment[]> => {
-        console.log("FETCH: getting deployments");
-        const cached = this._deploymentsCache.get<Deployment[]>("deployments");
+        const cached = this._deploymentsListCache.get<Deployment[]>("deployments");
 
         if (cached !== undefined) {
             return cached;
         }
+
+        console.log("FETCH: getting deployments");
 
         const response = await fetch("https://unitedtaskforce.net/campaigns/deployments", {
             method: "GET",
@@ -142,20 +187,14 @@ export class UnitafService {
 
         const deployments = Array.from(document.getElementsByClassName("campaign-row"))
             .map((rowElement) => {
-                const id = (rowElement.childNodes[0] as HTMLAnchorElement | undefined)?.href
-                    ?.replace("/operations/auth/", "")
-                    ?.replace("/orbat", "");
+                const id = (rowElement.childNodes[0] as HTMLAnchorElement | undefined)?.href?.replace("/operations/auth/", "")?.replace("/orbat", "");
 
                 const dateTimeVarName = `utcTime${id}`;
                 const dateTimeVarStartIndex = page.indexOf(dateTimeVarName);
                 const dateTimeStartIndex = dateTimeVarStartIndex + dateTimeVarName.length + 2;
 
                 const startDateTime =
-                    dateTimeVarStartIndex > 0
-                        ? Instant.parse(
-                              page.substring(dateTimeStartIndex, dateTimeStartIndex + 19).replace(" ", "T") + "Z"
-                          )
-                        : null;
+                    dateTimeVarStartIndex > 0 ? Instant.parse(page.substring(dateTimeStartIndex, dateTimeStartIndex + 19).replace(" ", "T") + "Z") : null;
 
                 let release: Instant | null = null;
 
@@ -166,19 +205,13 @@ export class UnitafService {
 
                     release =
                         releaseDateTimeVarStartIndex > 0
-                            ? Instant.parse(
-                                  page
-                                      .substring(releaseDateTimeStartIndex, releaseDateTimeStartIndex + 19)
-                                      .replace(" ", "T") + "Z"
-                              )
+                            ? Instant.parse(page.substring(releaseDateTimeStartIndex, releaseDateTimeStartIndex + 19).replace(" ", "T") + "Z")
                             : null;
                 }
 
-                const titleElement = rowElement.children[1]?.children[0]?.children[0]?.children[0] as
-                    | HTMLHeadingElement
-                    | undefined;
+                const titleElement = rowElement.children[1]?.children[0]?.children[0]?.children[0] as HTMLHeadingElement | undefined;
 
-                const description = titleElement?.children[0]?.innerHTML;
+                const description = titleElement?.children[0]?.textContent;
 
                 let area: Area = "operation";
 
@@ -190,6 +223,7 @@ export class UnitafService {
 
                 return {
                     name: titleElement?.innerHTML.slice(0, titleElement?.innerHTML.indexOf("<")) ?? "",
+                    description: description ?? "",
                     area: area,
                     id: id ?? "-1",
                     release,
@@ -198,7 +232,7 @@ export class UnitafService {
             })
             .filter((d) => d.id !== "-1");
 
-        this._deploymentsCache.set("deployments", deployments, 59);
+        this._deploymentsListCache.set("deployments", deployments, 59);
 
         return deployments;
     };

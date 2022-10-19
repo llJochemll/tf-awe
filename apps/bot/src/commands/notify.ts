@@ -1,28 +1,50 @@
-import { ChronoUnit } from "@js-joda/core";
-import { ButtonInteraction, Client, TextChannel, EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle, MessageActionRowComponentBuilder } from "discord.js";
+/*import { ButtonInteraction, Client, MessageActionRow, MessageButton, MessageEmbed, TextChannel } from "discord.js";
 import { ButtonComponent, Discord, Once } from "discordx";
-import { JSONFile, Low } from "lowdb";
-import { UnitafService } from "../unitaf/service.js";
-import type { ExtendedDeployment } from "../unitaf/service.js";
-
-interface SlotNotification {
-    messageId: string;
-    mentionUsers: string[];
-    messages: string[];
-}
+import { Instant } from "@js-joda/core";
+import { Deployment, ExtendedDeployment, UnitafService } from "unitaf/src";
+import { scheduleJob } from "node-schedule";
+import { MongoClient } from "mongodb";
 
 interface NotificationData {
-    slotNotifications: { [id: string]: SlotNotification | undefined };
-    snapshots: { [id: string]: ExtendedDeployment | undefined };
+    mainMessageId: string;
+    mentionUsers: string[];
+    pingMessageIds: string[];
 }
 
-const db = new Low<NotificationData>(new JSONFile<NotificationData>(`${process.env["DB_FOLDER"]}notification.json`));
+interface DeploymentData {
+    deployment: ExtendedDeployment;
+    notificationData: NotificationData;
+}
 
 @Discord()
 export abstract class RemindMessage {
+    private _dbClient = new MongoClient(process.env["MONGO_URL"] ?? "");
+
     @Once("ready")
-    private async onMessage(message: unknown, client: Client, guardPayload: any) {
+    private async init(message: unknown, client: Client, guardPayload: any) {
+        await this._dbClient.connect();
+        const collection = this.getCollection();
+
         const unitafService = new UnitafService();
+
+        scheduleJob("* 0 * * * *", async () => {
+            const deployments = await unitafService.deployments();
+
+            if (deployments.length === 0) {
+                console.log("Found no deployments");
+                return;
+            }
+
+            for (const deployment of deployments) {
+                const savedDeployment = await collection.findOne({"deployment.id": deployment.id})
+            }
+
+
+        });
+
+
+
+        
 
         setInterval(async () => {
             const deployments = await unitafService.deployments();
@@ -46,28 +68,29 @@ export abstract class RemindMessage {
             }
 
             for (const deployment of deployments) {
-                if (deployment.release === null && db.data.slotNotifications[deployment.id] === undefined) {
-                    const messageEmbed = new EmbedBuilder()
-                        .setTitle(
-                            `ORBAT for ${deployment.name} has been released, click the button below for slot notifications`
-                        )
+                if (
+                    (deployment.release === null ||
+                        (deployment.release !== null &&
+                            deployment.release.isBefore(Instant.now().plusSeconds(79200)))) &&
+                    db.data.slotNotifications[deployment.id] === undefined
+                ) {
+                    const messageEmbed = new MessageEmbed()
+                        .setTitle(`ORBAT for ${deployment.name}, click the button below for slot notifications`)
                         .setDescription(
                             `You will be notified of any slot that opens up, so be prepared to be pinged a lot`
                         )
                         .setURL(`https://unitedtaskforce.net/operations/auth/${deployment.id}/orbat`);
 
-                    const row = new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
-                        new ButtonBuilder()
+                    const row = new MessageActionRow().addComponents(
+                        new MessageButton()
                             .setCustomId(`notify-slot-enable-${deployment.id}`)
                             .setLabel("Enable notifications")
-                            .setStyle(ButtonStyle.Primary),
-                        new ButtonBuilder()
+                            .setStyle("PRIMARY"),
+                        new MessageButton()
                             .setCustomId(`notify-slot-disable-${deployment.id}`)
                             .setLabel("Disable notifications")
-                            .setStyle(ButtonStyle.Danger)
+                            .setStyle("DANGER")
                     );
-
-                    
 
                     const channel = await client.channels.fetch(process.env["BOT_CHANNEL_ID"] ?? "-1");
 
@@ -82,7 +105,7 @@ export abstract class RemindMessage {
                     await db.write();
                 }
 
-                if (db.data.slotNotifications[deployment.id] !== undefined) {
+                if (db.data.slotNotifications[deployment.id] !== undefined && deployment.release === null) {
                     const current = await unitafService.deployment(deployment.id);
                     const snapshot = db.data.snapshots[deployment.id];
 
@@ -148,7 +171,7 @@ export abstract class RemindMessage {
                         });
                     }*/
 
-                    db.data.snapshots[deployment.id] = current;
+                    /*db.data.snapshots[deployment.id] = current;
 
                     await db.write();
                 }
@@ -213,9 +236,9 @@ export abstract class RemindMessage {
             }
         });
         //}, 60000);*/
-    }
+    /*}
 
-    @ButtonComponent(/notify-slot-enable-.*/)
+    @ButtonComponent(/notify-slot-enable-.)
     async onSlotEnable(interaction: ButtonInteraction) {
         const embed = interaction.message.embeds[0];
 
@@ -245,7 +268,7 @@ export abstract class RemindMessage {
         interaction.deferUpdate();
     }
 
-    @ButtonComponent(/notify-slot-disable-.*/)
+    @ButtonComponent(/notify-slot-disable-.)
     async onSlotDisable(interaction: ButtonInteraction) {
         const embed = interaction.message.embeds[0];
 
@@ -289,28 +312,28 @@ export abstract class RemindMessage {
             const slotEntries =
                 slots !== undefined ? [...slots.entries()].filter(([name, open]) => open > 0) : undefined;
 
-                let newEmbed = EmbedBuilder.from(embed).setFields([
-                    {
-                        name: "Open slots:",
-                        value:
-                            slotEntries !== undefined
-                                ? slotEntries.length > 0
-                                    ? slotEntries.map(([name, open]) => `- ${name}: ${open} open`).join("\n")
-                                    : "No open slots"
-                                : embed.fields[0].value,
-                        inline: false,
-                    },
-                    {
-                        name: "Notifications enabled for:",
-                        value:
-                            slotNotification.mentionUsers.length ?? 0 > 0
-                                ? `<@${slotNotification.mentionUsers.join("> <@")}>`
-                                : "Nobody",
-                        inline: false,
-                    },
-                ])
+            embed.fields = [
+                {
+                    name: "Open slots:",
+                    value:
+                        slotEntries !== undefined
+                            ? slotEntries.length > 0
+                                ? slotEntries.map(([name, open]) => `- ${name}: ${open} open`).join("\n")
+                                : "No open slots"
+                            : embed.fields[0].value,
+                    inline: false,
+                },
+                {
+                    name: "Notifications enabled for:",
+                    value:
+                        slotNotification.mentionUsers.length ?? 0 > 0
+                            ? `<@${slotNotification.mentionUsers.join("> <@")}>`
+                            : "Nobody",
+                    inline: false,
+                },
+            ];
 
-            await message.edit({embeds: [newEmbed]});
+            await message.edit({ embeds: [embed] });
         } catch (e) {
             console.error(e);
         }
@@ -346,4 +369,8 @@ export abstract class RemindMessage {
 
         await db.write();
     }
-}
+
+    private getCollection() {
+        return this._dbClient.db("main").collection<DeploymentData>("games");
+    }
+}*/

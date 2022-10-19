@@ -4,7 +4,6 @@ import { Client } from "discordx";
 import { dirname, importx } from "@discordx/importer";
 import { Koa } from "@discordx/koa";
 import { config } from "dotenv";
-import { UnitafService } from "./unitaf/service.js";
 
 config();
 
