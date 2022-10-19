@@ -143,7 +143,7 @@ export class UnitafService {
                     group,
                     name,
                     player,
-                    id: `${group.name}-${name}`
+                    id: `${group.name}-${name}-${group.slots.filter(s => s.name == name).length}`
                 };
 
                 group.slots.push(slot);

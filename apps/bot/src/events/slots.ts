@@ -79,8 +79,6 @@ export abstract class RemindMessage {
                     }
 
                     db.data.deployments[id] = undefined;
-
-                    await db.write();
                 }
             }
 
@@ -203,8 +201,9 @@ export abstract class RemindMessage {
                 }
 
                 db.data.deployments[deployment.id]!.snapshot = deployment.slots.map((s) => ({ id: s.id, isOpen: s.player === null }));
-                await db.write();
             }
+
+            await db.write();
         });
     }
 
