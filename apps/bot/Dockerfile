@@ -13,4 +13,4 @@ RUN npm install
 RUN npm run build
 
 # Start bot
-CMD [ "node", "build/main.js" ]
+CMD [ "node", "dist/main.js" ]

@@ -1,0 +1,35 @@
+{
+  "name": "unitaf",
+  "version": "1.0.0",
+  "description": "Bot for TF-AWE",
+  "license": "MIT",
+  "author": "Jochem",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@js-joda/core": "^5.4.1",
+    "jsdom": "^20.0.1",
+    "lowdb": "^3.0.0",
+    "node-cache": "^5.1.2",
+    "node-fetch": "^3.2.10",
+    "reflect-metadata": "^0.1.13"
+  },
+  "devDependencies": {
+    "@types/jsdom": "^20.0.0",
+    "@types/koa": "^2.13.5",
+    "dotenv": "^16.0.3",
+    "nodemon": "^2.0.20",
+    "pm2": "^5.2.2",
+    "prettier": "^2.7.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.8.4"
+  },
+  "engines": {
+    "node": ">=17.0.0",
+    "npm": ">=7.0.0"
+  }
+}

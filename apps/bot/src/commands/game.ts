@@ -2,7 +2,7 @@ import { ApplicationCommandOptionType, Client, CommandInteraction, GuildMember }
 import { Discord, Once, Slash, SlashGroup, SlashOption } from "discordx";
 import { JSONFile, Low } from "lowdb";
 
-const gameNames = ["Arma 3", "Squad", "Ready or not", "Escape from Tarkov", "DayZ", "Reforger"] as const;
+const gameNames = ["Arma 3", "Squad", "Ready or not", "Escape from Tarkov", "DayZ", "Reforger", "War Thunder"] as const;
 
 type GameName = typeof gameNames[number];
 
@@ -17,8 +17,13 @@ interface GameData {
 const db = new Low<GameData>(new JSONFile<GameData>(`${process.env["DB_FOLDER"]}game.json`));
 
 @Discord()
-export abstract class GameInit {
-    @Once("ready")
+@SlashGroup({
+    name: "game",
+    description: "Game commands",
+})
+@SlashGroup("game")
+export abstract class RemindCommand {
+    @Once({ event: "ready" })
     private async init(message: unknown, client: Client, guardPayload: any) {
         await db.read();
 
@@ -56,18 +61,11 @@ export abstract class GameInit {
 
         await db.write();
     }
-}
 
-@Discord()
-@SlashGroup({
-    name: "game",
-    description: "Game commands"
-})
-@SlashGroup("game")
-export abstract class RemindCommand {
-    @Slash("subscribe")
+    @Slash({ name: "subscribe", description: "subscribe" })
     private async subscribe(
-        @SlashOption("game", {
+        @SlashOption({
+            name: "game",
             type: ApplicationCommandOptionType.String,
             autocomplete: (interaction) => {
                 interaction.respond(gameNames.map((n) => ({ name: n, value: n })));
@@ -91,9 +89,10 @@ export abstract class RemindCommand {
         interaction.reply(`You are subscribed to pings for ${gameName}`);
     }
 
-    @Slash("unsubscribe")
+    @Slash({ name: "unsubscribe", description: "unsubscribe" })
     private async unsubscribe(
-        @SlashOption("game", {
+        @SlashOption({
+            name: "game",
             type: ApplicationCommandOptionType.String,
             autocomplete: (interaction) => {
                 interaction.respond(gameNames.map((n) => ({ name: n, value: n })));
