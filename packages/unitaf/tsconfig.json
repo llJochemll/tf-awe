@@ -15,6 +15,7 @@
 
     /* Advanced Options */
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "composite": true
   }
 }
