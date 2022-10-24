@@ -42,7 +42,7 @@
     "discordx": "^11.4.0",
     "jsdom": "^20.0.1",
     "koa": "^2.13.4",
-    "lowdb": "^3.0.0",
+    "lowdb": "^5.0.5",
     "node-cache": "^5.1.2",
     "node-fetch": "^3.2.10",
     "node-schedule": "^2.1.0",
