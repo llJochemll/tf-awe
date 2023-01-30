@@ -29,10 +29,6 @@ client.once("ready", async () => {
         global: { log: true },
     });
 
-    const temp = new UnitafService();
-
-    await temp.deployments();
-
     // init permissions; enabled log to see changes
     //await client. initApplicationPermissions(true);
 

@@ -199,7 +199,7 @@ export class UnitafService {
                 let release: Instant | null = null;
 
                 if (page.includes(`${id}_orbat_count`)) {
-                    const releaseDateTimeVarName = `date_${id}=new Date(Date.parse(`;
+                    const releaseDateTimeVarName = `date_${id} = new Date(Date.parse(`;
                     const releaseDateTimeVarStartIndex = page.indexOf(releaseDateTimeVarName);
                     const releaseDateTimeStartIndex = releaseDateTimeVarStartIndex + releaseDateTimeVarName.length + 1;
 
