@@ -4,6 +4,7 @@ import { Client } from "discordx";
 import { dirname, importx } from "@discordx/importer";
 import { Koa } from "@discordx/koa";
 import { config } from "dotenv";
+import { UnitafService } from "unitaf";
 
 config();
 
@@ -27,6 +28,10 @@ client.once("ready", async () => {
         guild: { log: true },
         global: { log: true },
     });
+
+    const temp = new UnitafService();
+
+    await temp.deployments();
 
     // init permissions; enabled log to see changes
     //await client. initApplicationPermissions(true);

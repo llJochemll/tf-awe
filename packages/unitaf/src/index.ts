@@ -191,7 +191,7 @@ export class UnitafService {
 
                 const dateTimeVarName = `utcTime${id}`;
                 const dateTimeVarStartIndex = page.indexOf(dateTimeVarName);
-                const dateTimeStartIndex = dateTimeVarStartIndex + dateTimeVarName.length + 2;
+                const dateTimeStartIndex = dateTimeVarStartIndex + dateTimeVarName.length + 4;
 
                 const startDateTime =
                     dateTimeVarStartIndex > 0 ? Instant.parse(page.substring(dateTimeStartIndex, dateTimeStartIndex + 19).replace(" ", "T") + "Z") : null;
