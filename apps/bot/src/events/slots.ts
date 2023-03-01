@@ -11,7 +11,7 @@ import {
 } from "discord.js";
 import { ButtonComponent, Discord, Once } from "discordx";
 import { Instant } from "@js-joda/core";
-import { UnitafService } from "unitaf";
+import { Deployment, ExtendedDeployment, UnitafService } from "unitaf";
 import { scheduleJob } from "node-schedule";
 import { JSONFile, Low } from "lowdb";
 
@@ -49,7 +49,14 @@ export abstract class RemindMessage {
                 return;
             }
 
-            const deployments = await unitafService.deployments();
+            let deployments: Deployment[];
+
+            try {
+                deployments = await unitafService.deployments();
+            } catch (e) {
+                console.log(e);
+                return;
+            }
 
             if (deployments.length === 0) {
                 console.log("Found no deployments");
@@ -84,7 +91,15 @@ export abstract class RemindMessage {
 
             for (const basicDeployment of deployments) {
                 let deploymentData = db.data.deployments[basicDeployment.id];
-                const deployment = await unitafService.deployment(basicDeployment.id);
+
+                let deployment: ExtendedDeployment;
+
+                try {
+                    deployment = await unitafService.deployment(basicDeployment.id);
+                } catch (e) {
+                    console.log(e);
+                    return;
+                }
 
                 if (deploymentData === undefined) {
                     deploymentData = {
@@ -174,7 +189,9 @@ export abstract class RemindMessage {
                                         console.log(e);
                                     }
 
-                                    db.data.deployments[deployment.id]!.pingMessages = db.data.deployments[deployment.id]!.pingMessages.filter(p => p.id !== pingMessage.id);
+                                    db.data.deployments[deployment.id]!.pingMessages = db.data.deployments[deployment.id]!.pingMessages.filter(
+                                        (p) => p.id !== pingMessage.id
+                                    );
                                 }
                             } else if (!(deploymentData.snapshot.find((s) => s.id === slot.id)?.isOpen ?? true)) {
                                 const channel = await client.channels.fetch(process.env["BOT_CHANNEL_ID"] ?? "-1");
