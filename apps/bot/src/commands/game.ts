@@ -2,7 +2,7 @@ import { ApplicationCommandOptionType, Client, CommandInteraction, GuildMember }
 import { Discord, Once, Slash, SlashGroup, SlashOption } from "discordx";
 import { JSONFile, Low } from "lowdb";
 
-const gameNames = ["Arma 3", "Squad", "Ready or not", "Escape from Tarkov", "DayZ", "Reforger", "War Thunder", "Barotrauma"] as const;
+const gameNames = ["Arma 3", "Squad", "Ready or not", "Escape from Tarkov", "DayZ", "Reforger", "War Thunder", "Barotrauma", "DCS"] as const;
 
 type GameName = typeof gameNames[number];
 
