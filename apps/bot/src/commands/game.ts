@@ -1,6 +1,7 @@
 import { ApplicationCommandOptionType, Client, CommandInteraction, GuildMember } from "discord.js";
 import { Discord, Once, Slash, SlashGroup, SlashOption } from "discordx";
-import { JSONFile, Low } from "lowdb";
+import { Low } from "lowdb";
+import { JSONFile } from "lowdb/node";
 
 const gameNames = ["Arma 3", "Squad", "Ready or not", "Escape from Tarkov", "DayZ", "Reforger", "War Thunder", "Barotrauma", "DCS"] as const;
 
@@ -11,10 +12,10 @@ interface Game {
 }
 
 interface GameData {
-    games: { [id in GameName]: Game | undefined };
+    games: { [id in GameName]?: Game };
 }
 
-const db = new Low<GameData>(new JSONFile<GameData>(`${process.env["DB_FOLDER"]}game.json`));
+const db = new Low<GameData>(new JSONFile<GameData>(`${process.env["DB_FOLDER"]}game.json`), { games: {} });
 
 @Discord()
 @SlashGroup({
@@ -38,7 +39,7 @@ export abstract class RemindCommand {
 
                 if (db.data.games[gameName] === undefined) {
                     db.data.games[gameName] = {
-                        name: gameName
+                        name: gameName,
                     };
                 }
 

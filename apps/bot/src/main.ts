@@ -25,8 +25,8 @@ client.once("ready", async () => {
 
     // init all application commands
     await client.initApplicationCommands({
-        guild: { log: true },
-        global: { log: true },
+        guild: {},
+        global: {},
     });
 
     // init permissions; enabled log to see changes
@@ -81,10 +81,10 @@ async function start() {
 
 const run = () => {
     try {
-        start()
+        start();
     } catch (e) {
         run();
     }
-}
+};
 
 run();

@@ -13,7 +13,8 @@ import { ButtonComponent, Discord, Once } from "discordx";
 import { Instant } from "@js-joda/core";
 import { Deployment, ExtendedDeployment, UnitafService } from "unitaf";
 import { scheduleJob } from "node-schedule";
-import { JSONFile, Low } from "lowdb";
+import { Low } from "lowdb";
+import { JSONFile } from "lowdb/node";
 
 interface NotificationData {
     deployments: { [id: string]: DeploymentData | undefined };
@@ -30,7 +31,7 @@ interface DeploymentData {
     snapshot: { id: string; isOpen: boolean }[];
 }
 
-const db = new Low<NotificationData>(new JSONFile<NotificationData>(`${process.env["DB_FOLDER"]}slots.json`));
+const db = new Low<NotificationData>(new JSONFile<NotificationData>(`${process.env["DB_FOLDER"]}slots.json`), { deployments: {} });
 
 @Discord()
 export abstract class RemindMessage {
