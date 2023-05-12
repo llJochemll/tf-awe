@@ -67,7 +67,7 @@ export class UnitafService {
     private _deploymentsCache = new NodeCache({ stdTTL: 59 });
     private _deploymentsListCache = new NodeCache({ stdTTL: 59 });
 
-    constructor(private _sessionId = "07ehnlbcme09rseh64jh170ifhim12bu") {}
+    constructor(private _sessionId = "qjnpbvmvqoqdhh96colm4d3jldolu54d") {}
 
     login = async (username: string, password: string) => {
         /*const data = new FormData();
